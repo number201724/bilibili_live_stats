@@ -1,0 +1,22 @@
+{
+  "name": "bilibili_live_stats",
+  "version": "1.0.0",
+  "description": "",
+  "main": "Master.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "log4js": "^2.5.2",
+    "memorystream": "^0.3.1",
+    "mongodb": "^2.2.33",
+    "mysql": "^2.16.0",
+    "node-png": "^0.4.3",
+    "node-rsa": "^0.4.2",
+    "promise-mysql": "^3.3.1",
+    "request": "^2.88.0",
+    "request-promise": "^4.2.2"
+  }
+}
