@@ -9,7 +9,8 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "log4js": "^2.11.0",
+    "hoek": "^6.0.4",
+    "log4js": "^3.0.6",
     "memorystream": "^0.3.1",
     "mongodb": "^2.2.36",
     "mysql": "^2.16.0",
