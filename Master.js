@@ -14,7 +14,7 @@ Date.prototype.toMysqlFormat = function () {
     return this.getUTCFullYear() + "-" + twoDigits(1 + this.getUTCMonth()) + "-" + twoDigits(this.getUTCDate()) + " " + twoDigits(this.getHours()) + ":" + twoDigits(this.getUTCMinutes()) + ":" + twoDigits(this.getUTCSeconds());
 };
 
-async function updateUserInfo(uid, uname, gold, silver) {
+async function updateUserInfo(db, uid, uname, gold, silver) {
         let results = await db.query('SELECT * FROM users WHERE uid = ?', [uid]);
 
         if (gold != null && silver != null) {       //如果有金瓜子和银瓜子信息就更新数据
@@ -55,6 +55,8 @@ async function giftEventHandler(json, roomId) {
     num = json.data.num;
     time = new Date().toMysqlFormat();
 
+    let db = await pool.getConnection();
+
     if (coin_type != 'silver') {
         try {
             await db.query('INSERT INTO gifts VALUES(NULL,?,?,?,?,?,?,?,?,?,?,?);', [roomId, uid, giftId, uname, giftname, coin_type, total_coin, gold, silver, num, time]);
@@ -62,19 +64,25 @@ async function giftEventHandler(json, roomId) {
         catch (e) {
             console.log(e);
         }
-        updateUserInfo(uid, uname, gold, silver);
+        await updateUserInfo(db, uid, uname, gold, silver);
     } else {
-        updateUserInfo(uid, uname, null, null);
+        await updateUserInfo(db, uid, uname, null, null);
     }
+
+    await pool.releaseConnection(db);
 }
 
 async function danmuEventHandler(json, roomId) {
+    
     uid = json.info[2][0];
     uname = json.info[2][1];
     text = json.info[1];
     is_admin = json.info[2][2];
     ship_member = json.info[7];
     time = new Date().toMysqlFormat();
+
+
+    let db = await pool.getConnection();
 
     try {
         await db.query('INSERT INTO danmu VALUES(NULL,?,?,?,?,?,?,?);', [roomId, uid, uname, text, is_admin, ship_member, time]);
@@ -83,10 +91,13 @@ async function danmuEventHandler(json, roomId) {
         console.log(e);
     }
 
-    updateUserInfo(uid, uname, null, null);
+    await updateUserInfo(db, uid, uname, null, null);
+
+    await pool.releaseConnection(db);
 }
 
 async function guardBuyEventHandle(json, roomId) {
+    
     uid = json.data.uid;
     giftId = json.data.gift_id;
     uname = json.data.username;
@@ -98,6 +109,7 @@ async function guardBuyEventHandle(json, roomId) {
     super_gift_num = json.data.num;
     time = new Date().toMysqlFormat();
 
+    let db = await pool.getConnection();
 
     try {
         await db.query('INSERT INTO gifts VALUES(NULL,?,?,?,?,?,?,?,?,?,?,?);', [roomId, uid, giftId, uname, giftname, coin_type, total_coin, gold, silver, super_gift_num, time], function (err, result) { if (err != null) { console.log(err); } });
@@ -107,11 +119,12 @@ async function guardBuyEventHandle(json, roomId) {
     }
     
     if (coin_type != 'silver') {
-        updateUserInfo(uid, uname, gold, silver);
+        await updateUserInfo(db, uid, uname, null, null);
     } else {
-        updateUserInfo(uid, uname, null, null);
+        await updateUserInfo(db, uid, uname, null, null);
     }
 
+    await pool.releaseConnection(db);
 }
 
 async function cmtEventHandler(json, roomId) {
@@ -140,13 +153,13 @@ async function cmtEventHandler(json, roomId) {
         case 'CHANGE_ROOM_INFO':
             break;
         case 'SEND_GIFT':       //礼物消息
-            giftEventHandler(json, roomId);
+            await giftEventHandler(json, roomId);
             break;
         case 'DANMU_MSG':       //弹幕消息
-            danmuEventHandler(json, roomId);
+        await danmuEventHandler(json, roomId);
             break;
         case 'GUARD_BUY':
-            guardBuyEventHandle(json, roomId);
+        await guardBuyEventHandle(json, roomId);
             break;
         default:                //不晓得啥消息输出到控制台
             console.log(json);
@@ -154,7 +167,7 @@ async function cmtEventHandler(json, roomId) {
     }
 }
 async function main() {
-    global.db = await mysql.createConnection(JSON.parse(fs.readFileSync('db.json')));
+    global.pool = await mysql.createPool(JSON.parse(fs.readFileSync('db.json')));
     
     new BiliBarrage(82178, cmtEventHandler);        //猫不吃芒果め
     new BiliBarrage(271744, cmtEventHandler);       //某幻君
