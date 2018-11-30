@@ -154,6 +154,7 @@ async function cmtEventHandler(json, roomId) {
         case 'RAFFLE_END':      //抽奖结束
         case 'WARNING':     //警告
         case 'CUT_OFF': //切掉
+        case 'ACTIVITY_EVENT':  //活动信息
             break;
         case 'SEND_GIFT':       //礼物消息
             await giftEventHandler(json, roomId);
@@ -164,6 +165,7 @@ async function cmtEventHandler(json, roomId) {
         case 'GUARD_BUY':
         await guardBuyEventHandle(json, roomId);
             break;
+        
         default:                //不晓得啥消息输出到控制台
             console.log(json);
             break;
