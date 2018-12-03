@@ -63,7 +63,11 @@ class BiliBarrage {
         if (this.sock != null) 
         {
             this.sock.connect(788, 'livecmt-2.bilibili.com');
-            console.log("reconn");
+            console.log("run connect");
+        }
+        else
+        {
+            console.log("bad socket")
         }
     }
 
