@@ -116,6 +116,7 @@ async function guardBuyEventHandle(json, roomId) {
 
 async function cmtEventHandler(json, roomId) {
     switch (json.cmd) {
+        case 'new_anchor_reward':
         case 'ROOM_RANK':       //小时榜rank更新
         case 'WELCOME':         //欢迎老爷进入房间xxoo
         case 'NOTICE_MSG':      //广播通知消息
@@ -137,6 +138,7 @@ async function cmtEventHandler(json, roomId) {
         case 'ROOM_SILENT_OFF': //禁言关闭? 直播结束？
         case 'WELCOME_GUARD':   //  { cmd: 'WELCOME_GUARD',data: { uid: 11510390, username: '熊熊今天也是高冷的呀', guard_level: 3 } }
         case 'CHANGE_ROOM_INFO':
+        case 'RAFFLE_START':    //抽奖开始
         case 'RAFFLE_END':      //抽奖结束
         case 'WARNING':     //警告
         case 'CUT_OFF': //切掉
