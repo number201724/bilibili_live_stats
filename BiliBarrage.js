@@ -60,10 +60,11 @@ class BiliBarrage {
     }
 
     connect() {
-        if (this.sock != null) {
+        if (this.sock != null) 
+        {
             this.sock.connect(788, 'livecmt-2.bilibili.com');
+            console.log("reconn");
         }
-
     }
 
     sendSocketData(p1, p2, p3, p4, p5, p6) {

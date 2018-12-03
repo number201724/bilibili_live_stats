@@ -141,6 +141,7 @@ async function cmtEventHandler(json, roomId) {
         case 'WARNING':     //警告
         case 'CUT_OFF': //切掉
         case 'ACTIVITY_EVENT':  //活动信息
+        case 'HOUR_RANK_AWARDS':
             break;
         case 'SEND_GIFT':       //礼物消息
             await giftEventHandler(json, roomId);
