@@ -4,41 +4,31 @@ const fs = require('fs')
 const BiliBarrage = require("./BiliBarrage");
 
 
-function twoDigits(d) {
-    if (0 <= d && d < 10) return "0" + d.toString();
-    if (-10 < d && d < 0) return "-0" + (-1 * d).toString();
-    return d.toString();
-}
-
-Date.prototype.toMysqlFormat = function () {
-    return this.getUTCFullYear() + "-" + twoDigits(1 + this.getUTCMonth()) + "-" + twoDigits(this.getUTCDate()) + " " + twoDigits(this.getHours()) + ":" + twoDigits(this.getUTCMinutes()) + ":" + twoDigits(this.getUTCSeconds());
-};
-
 async function updateUserInfo(db, uid, uname, gold, silver) {
         let results = await db.query('SELECT * FROM users WHERE uid = ?', [uid]);
 
         if (gold != null && silver != null) {       //如果有金瓜子和银瓜子信息就更新数据
             if(results.length == 0) {
                 try {
-                    results = await db.query('INSERT INTO users VALUES(?, ?, ?,?,?,?)', [uid, uname, gold, silver, new Date().toMysqlFormat(), new Date().toMysqlFormat()]);
+                    results = await db.query('INSERT INTO users VALUES(?, ?, ?,?,NOW(),NOW())', [uid, uname, gold, silver]);
                 }
                 catch(e){
-                    await db.query('UPDATE users SET uname = ?, gold = ?, silver = ?, updated_at = ? WHERE uid = ?', [uname, gold, silver, new Date().toMysqlFormat(), uid]);
+                    await db.query('UPDATE users SET uname = ?, gold = ?, silver = ?, updated_at = NOW() WHERE uid = ?', [uname, gold, silver, uid]);
                 }
             } else {
-                await db.query('UPDATE users SET uname = ?, gold = ?, silver = ?, updated_at = ? WHERE uid = ?', [uname, gold, silver, new Date().toMysqlFormat(), uid]);
+                await db.query('UPDATE users SET uname = ?, gold = ?, silver = ?, updated_at = NOW() WHERE uid = ?', [uname, gold, silver, uid]);
             }
         } else {
     
             if(results.length == 0) {
                 try {
-                    results = await db.query('INSERT INTO users VALUES(?,?,0,0,?,?)', [uid, uname, new Date().toMysqlFormat(), new Date().toMysqlFormat()]);
+                    results = await db.query('INSERT INTO users VALUES(?,?,0,0,NOW(),NOW())', [uid, uname]);
                 }
                 catch(e){
-                    await db.query('UPDATE users SET uname = ?, updated_at = ? WHERE uid = ?', [uname, new Date().toMysqlFormat(), uid]);
+                    await db.query('UPDATE users SET uname = ?, updated_at = NOW() WHERE uid = ?', [uname, uid]);
                 }
             } else {
-                await db.query('UPDATE users SET uname = ?, updated_at = ? WHERE uid = ?', [uname, new Date().toMysqlFormat(), uid]);
+                await db.query('UPDATE users SET uname = ?, updated_at = NOW() WHERE uid = ?', [uname, uid]);
             }
         }
 }
@@ -53,13 +43,12 @@ async function giftEventHandler(json, roomId) {
     gold = json.data.gold;
     silver = json.data.silver;
     num = json.data.num;
-    time = new Date().toMysqlFormat();
 
     let db = await pool.getConnection();
 
     if (coin_type != 'silver') {
         try {
-            await db.query('INSERT INTO gifts VALUES(NULL,?,?,?,?,?,?,?,?,?,?,?);', [roomId, uid, giftId, uname, giftname, coin_type, total_coin, gold, silver, num, time]);
+            await db.query('INSERT INTO gifts VALUES(NULL,?,?,?,?,?,?,?,?,?,?,NOW());', [roomId, uid, giftId, uname, giftname, coin_type, total_coin, gold, silver, num]);
         }
         catch (e) {
             console.log(e);
@@ -79,13 +68,12 @@ async function danmuEventHandler(json, roomId) {
     text = json.info[1];
     is_admin = json.info[2][2];
     ship_member = json.info[7];
-    time = new Date().toMysqlFormat();
 
 
     let db = await pool.getConnection();
 
     try {
-        await db.query('INSERT INTO danmu VALUES(NULL,?,?,?,?,?,?,?);', [roomId, uid, uname, text, is_admin, ship_member, time]);
+        await db.query('INSERT INTO danmu VALUES(NULL,?,?,?,?,?,?,NOW());', [roomId, uid, uname, text, is_admin, ship_member]);
     }
     catch (e) {
         console.log(e);
@@ -107,12 +95,11 @@ async function guardBuyEventHandle(json, roomId) {
     gold = 0;
     silver = 0;
     super_gift_num = json.data.num;
-    time = new Date().toMysqlFormat();
 
     let db = await pool.getConnection();
 
     try {
-        await db.query('INSERT INTO gifts VALUES(NULL,?,?,?,?,?,?,?,?,?,?,?);', [roomId, uid, giftId, uname, giftname, coin_type, total_coin, gold, silver, super_gift_num, time], function (err, result) { if (err != null) { console.log(err); } });
+        await db.query('INSERT INTO gifts VALUES(NULL,?,?,?,?,?,?,?,?,?,?,NOW());', [roomId, uid, giftId, uname, giftname, coin_type, total_coin, gold, silver, super_gift_num], function (err, result) { if (err != null) { console.log(err); } });
 
     }catch(e){
         console.log(e)
@@ -128,7 +115,6 @@ async function guardBuyEventHandle(json, roomId) {
 }
 
 async function cmtEventHandler(json, roomId) {
-
     switch (json.cmd) {
         case 'ROOM_RANK':       //小时榜rank更新
         case 'WELCOME':         //欢迎老爷进入房间xxoo
