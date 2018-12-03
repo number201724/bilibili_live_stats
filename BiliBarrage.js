@@ -47,7 +47,7 @@ class BiliBarrage {
 
             sock.sendSocketData(16 + buffer.length, 16, 1, 7, 1, buffer);
             sock.sendHeartBeat();
-            sock.setTimeout(10000);     //30秒超时
+            sock.setTimeout(30000);     //30秒超时
 
             sock.heartbeat = setInterval(sock.sendHeartBeat, 10000);
 
