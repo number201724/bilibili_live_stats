@@ -91,6 +91,8 @@ class BiliBarrage {
             console.log(`Connect ${this.roomId} barrage server failed`);
         }
         
+        this.is_connected = false;
+        
         this.sock = undefined;
     }
 
@@ -105,6 +107,7 @@ class BiliBarrage {
         }
 
         this.sock = this.createSocket();
+        this.is_connected = false;
         this.sock.connect(788, 'livecmt-2.bilibili.com');
     }
 

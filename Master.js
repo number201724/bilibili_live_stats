@@ -18,7 +18,7 @@ async function updateUserInfo(db, uid, uname, gold, silver) {
     if (gold != null && silver != null) {       //如果有金瓜子和银瓜子信息就更新数据
         if (results.length == 0) {
             try {
-                results = await db.query('INSERT INTO users VALUES(?, ?, ?,?,NOW(),NOW())', [uid, uname, gold, silver]);
+                await db.query('INSERT INTO users VALUES(?, ?, ?,?,NOW(),NOW())', [uid, uname, gold, silver]);
             }
             catch (e) {
                 await db.query('UPDATE users SET uname = ?, gold = ?, silver = ?, updated_at = NOW() WHERE uid = ?', [uname, gold, silver, uid]);
@@ -27,10 +27,9 @@ async function updateUserInfo(db, uid, uname, gold, silver) {
             await db.query('UPDATE users SET uname = ?, gold = ?, silver = ?, updated_at = NOW() WHERE uid = ?', [uname, gold, silver, uid]);
         }
     } else {
-
         if (results.length == 0) {
             try {
-                results = await db.query('INSERT INTO users VALUES(?,?,0,0,NOW(),NOW())', [uid, uname]);
+                await db.query('INSERT INTO users VALUES(?,?,0,0,NOW(),NOW())', [uid, uname]);
             }
             catch (e) {
                 await db.query('UPDATE users SET uname = ?, updated_at = NOW() WHERE uid = ?', [uname, uid]);
@@ -54,6 +53,8 @@ async function giftEventHandler(json, roomId) {
 
     let db = await pool.getConnection();
 
+    // console.log(json)
+
     if (coin_type != 'silver') {
         try {
             await db.query('INSERT INTO gifts VALUES(NULL,?,?,?,?,?,?,?,?,?,?,NOW());', [roomId, uid, giftId, uname, giftname, coin_type, total_coin, gold, silver, num]);
@@ -66,7 +67,7 @@ async function giftEventHandler(json, roomId) {
         await updateUserInfo(db, uid, uname, null, null);
     }
 
-    await pool.releaseConnection(db);
+    await db.release();
 }
 
 async function danmuEventHandler(json, roomId) {
@@ -89,7 +90,7 @@ async function danmuEventHandler(json, roomId) {
 
     await updateUserInfo(db, uid, uname, null, null);
 
-    await pool.releaseConnection(db);
+    await db.release();
 }
 
 async function guardBuyEventHandle(json, roomId) {
@@ -107,8 +108,7 @@ async function guardBuyEventHandle(json, roomId) {
     let db = await pool.getConnection();
 
     try {
-        await db.query('INSERT INTO gifts VALUES(NULL,?,?,?,?,?,?,?,?,?,?,NOW());', [roomId, uid, giftId, uname, giftname, coin_type, total_coin, gold, silver, super_gift_num], function (err, result) { if (err != null) { console.log(err); } });
-
+        await db.query('INSERT INTO gifts VALUES(NULL,?,?,?,?,?,?,?,?,?,?,NOW());', [roomId, uid, giftId, uname, giftname, coin_type, total_coin, gold, silver, super_gift_num]);
     } catch (e) {
         console.log(e)
     }
@@ -119,40 +119,10 @@ async function guardBuyEventHandle(json, roomId) {
         await updateUserInfo(db, uid, uname, null, null);
     }
 
-    await pool.releaseConnection(db);
-}
-
-async function roomRankEventHandler(json, roomId) {
-    let room_id = json.data.roomid;
-    let uid = 0;
-    let title = '#UNKNOWN';
-
-    //console.log(json);
-
-    let db = await pool.getConnection();
-
-    try {
-        let results = await db.query('SELECT * FROM room WHERE room_id = ?', [room_id]);
-
-        if (results.length == 0) {
-            await db.query('INSERT INTO room VALUES(?,?,?);', [room_id, uid, title]);
-        }
-
-        if (!room_map.has(room_id)) {
-            add_room_map(new BiliBarrage(room_id, cmtEventHandler));
-        }
-    }
-    catch (e) {
-        console.log(e);
-
-    }
-
-
-    await pool.releaseConnection(db);
+    await db.release();
 }
 
 async function cmtEventHandler(json, roomId) {
-
     switch (json.cmd) {
         case 'new_anchor_reward':
         case 'WELCOME':         //欢迎老爷进入房间xxoo
@@ -160,8 +130,6 @@ async function cmtEventHandler(json, roomId) {
         case 'ENTRY_EFFECT':    //舰长进入房间特效
         case 'SPECIAL_GIFT':    //特效礼物 SPECIAL_GIFT 
         case 'WISH_BOTTLE':     //心愿瓶变动消息
-
-
         case 'COMBO_SEND':      //礼物连击消息
         case 'COMBO_END':       //礼物连击结束
         case 'WELCOME_ACTIVITY':    //进入房间特效(排行榜人物)
@@ -176,20 +144,14 @@ async function cmtEventHandler(json, roomId) {
         case 'CHANGE_ROOM_INFO':
         case 'RAFFLE_START':    //抽奖开始
         case 'RAFFLE_END':      //抽奖结束
-        case 'WARNING':     //警告
-        case 'CUT_OFF': //切掉
+        case 'WARNING':         //警告
+        case 'CUT_OFF':         //切掉
         case 'ACTIVITY_EVENT':  //活动信息
-            //case 'HOUR_RANK_AWARDS':
-            //console.log(json);
-            break;
         case 'GUARD_MSG':       //不知道是什么 开通总督的横屏消息
         case 'SYS_MSG':         //系统消息 横屏消息
         case 'SYS_GIFT':        //节奏风暴20倍触发这个
         case 'HOUR_RANK_AWARDS':
-            //console.log(json);
-            break;
         case 'ROOM_RANK':       //小时榜rank更新
-            roomRankEventHandler(json, roomId);
             break;
         case 'SEND_GIFT':       //礼物消息
             await giftEventHandler(json, roomId);
@@ -197,10 +159,9 @@ async function cmtEventHandler(json, roomId) {
         case 'DANMU_MSG':       //弹幕消息
             await danmuEventHandler(json, roomId);
             break;
-        case 'GUARD_BUY':
+        case 'GUARD_BUY':       //购买舰长
             await guardBuyEventHandle(json, roomId);
             break;
-
         default:                //不晓得啥消息输出到控制台
             console.log(json);
             break;
@@ -221,7 +182,7 @@ async function load_room_table() {
         }
     }
 
-    await pool.releaseConnection(db);
+    await db.release();
 }
 
 async function parseRankResult(json) {
@@ -250,7 +211,7 @@ async function parseRankResult(json) {
                 console.log(e);
             }
 
-            await pool.releaseConnection(db);
+            await db.release();
         }
     }
 }
@@ -259,7 +220,7 @@ async function getRank(area_id) {
     var options = {
         host: 'api.live.bilibili.com',
         port: 443,
-        path: '/rankdb/v1/Rank2018/getTop?type=master_last_hour&type_id=areaid_hour&area_id='+area_id,
+        path: '/rankdb/v1/Rank2018/getTop?type=master_last_hour&type_id=areaid_hour&area_id=' + area_id,
         method: 'GET'
     };
 
@@ -271,13 +232,12 @@ async function getRank(area_id) {
             body = body + chunk;
         });
 
-        res.on('end', function () {
+        res.on('end', async () => {
             if (res.statusCode == 200)
 
                 try {
                     let json = JSON.parse(body);
-                    // console.log(json)
-                    parseRankResult(json);
+                    await parseRankResult(json);
                 } catch (e) {
 
                 }
@@ -294,7 +254,7 @@ async function getRank(area_id) {
 }
 
 
-async function updateRank2018(){
+async function updateRank2018() {
     await getRank(1);
     await getRank(2);
     await getRank(3);
@@ -304,8 +264,6 @@ async function updateRank2018(){
 
 async function main() {
     global.pool = await mysql.createPool(JSON.parse(fs.readFileSync('db.json')));
-
-    
 
     add_room_map(new BiliBarrage(82178, cmtEventHandler));        //猫不吃芒果め
     add_room_map(new BiliBarrage(271744, cmtEventHandler));       //某幻君
@@ -346,7 +304,7 @@ async function main() {
     await load_room_table();
     await updateRank2018();
 
-    setInterval(() => {updateRank2018();}, 60000);
+    setInterval(() => { updateRank2018(); }, 60000);
 }
 
 main();
