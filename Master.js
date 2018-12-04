@@ -56,7 +56,7 @@ async function giftEventHandler(json, roomId) {
     // console.log(json)
 
     if (coin_type != 'silver') {
-        console.log(json)
+        // console.log(json)
         try {
             await db.query('INSERT INTO gifts VALUES(NULL,?,?,?,?,?,?,?,?,?,?,NOW());', [roomId, uid, giftId, uname, giftname, coin_type, total_coin, gold, silver, num]);
         }
@@ -159,6 +159,7 @@ async function cmtEventHandler(json, roomId) {
         case 'PK_END':
         case 'PK_SETTLE':
         case 'PK_PROCESS':
+        case 'PK_MIC_END':
             break;
         case 'SEND_GIFT':       //礼物消息
             await giftEventHandler(json, roomId);
