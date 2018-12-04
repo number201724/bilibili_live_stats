@@ -344,6 +344,7 @@ async function main() {
     add_room_map(new BiliBarrage(5632028, cmtEventHandler));       //Elifaus
 
     await load_room_table();
+    await updateRank2018();
 
     setInterval(() => {updateRank2018();}, 60000);
 }
