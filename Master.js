@@ -276,7 +276,7 @@ async function getRank(area_id) {
 
                 try {
                     let json = JSON.parse(body);
-                    console.log(json)
+                    // console.log(json)
                     parseRankResult(json);
                 } catch (e) {
 
