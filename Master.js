@@ -127,7 +127,7 @@ async function roomRankEventHandler(json, roomId) {
     let uid = 0;
     let title = '#UNKNOWN';
 
-    console.log(json);
+    //console.log(json);
 
     let db = await pool.getConnection();
 
@@ -186,7 +186,7 @@ async function cmtEventHandler(json, roomId) {
         case 'SYS_MSG':         //系统消息 横屏消息
         case 'SYS_GIFT':        //节奏风暴20倍触发这个
         case 'HOUR_RANK_AWARDS':
-            console.log(json);
+            //console.log(json);
             break;
         case 'ROOM_RANK':       //小时榜rank更新
             roomRankEventHandler(json, roomId);
