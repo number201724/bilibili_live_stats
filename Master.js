@@ -2,12 +2,12 @@ global.Util = require("./Util");
 const mysql = require('promise-mysql');
 const fs = require('fs')
 const BiliBarrage = require("./BiliBarrage");
+const https = require('https');
 
 global.room_map = new Map();
 
-function add_room_map(room) 
-{
-    if(!room_map.has(room.roomId)) {
+function add_room_map(room) {
+    if (!room_map.has(room.roomId)) {
         room_map.set(room.roomId, room);
     }
 }
@@ -123,9 +123,11 @@ async function guardBuyEventHandle(json, roomId) {
 }
 
 async function roomRankEventHandler(json, roomId) {
-    let room_id = json.roomid;
+    let room_id = json.data.roomid;
     let uid = 0;
     let title = '#UNKNOWN';
+
+    console.log(json);
 
     let db = await pool.getConnection();
 
@@ -136,11 +138,12 @@ async function roomRankEventHandler(json, roomId) {
             await db.query('INSERT INTO room VALUES(?,?,?);', [room_id, uid, title]);
         }
 
-        if(!room_map.has(room_id)) {
+        if (!room_map.has(room_id)) {
             add_room_map(new BiliBarrage(room_id, cmtEventHandler));
         }
     }
     catch (e) {
+        console.log(e);
 
     }
 
@@ -157,9 +160,8 @@ async function cmtEventHandler(json, roomId) {
         case 'ENTRY_EFFECT':    //舰长进入房间特效
         case 'SPECIAL_GIFT':    //特效礼物 SPECIAL_GIFT 
         case 'WISH_BOTTLE':     //心愿瓶变动消息
-        case 'SYS_MSG':         //系统消息 横屏消息
-        case 'SYS_GIFT':        //节奏风暴20倍触发这个
-        case 'GUARD_MSG':       //不知道是什么 开通总督的横屏消息
+
+
         case 'COMBO_SEND':      //礼物连击消息
         case 'COMBO_END':       //礼物连击结束
         case 'WELCOME_ACTIVITY':    //进入房间特效(排行榜人物)
@@ -177,8 +179,14 @@ async function cmtEventHandler(json, roomId) {
         case 'WARNING':     //警告
         case 'CUT_OFF': //切掉
         case 'ACTIVITY_EVENT':  //活动信息
+            //case 'HOUR_RANK_AWARDS':
+            //console.log(json);
+            break;
+        case 'GUARD_MSG':       //不知道是什么 开通总督的横屏消息
+        case 'SYS_MSG':         //系统消息 横屏消息
+        case 'SYS_GIFT':        //节奏风暴20倍触发这个
         case 'HOUR_RANK_AWARDS':
-           // console.log(json);
+            console.log(json);
             break;
         case 'ROOM_RANK':       //小时榜rank更新
             roomRankEventHandler(json, roomId);
@@ -205,11 +213,10 @@ async function load_room_table() {
 
     let results = await db.query('SELECT * FROM room');
 
-    for(let i in results)
-    {
+    for (let i in results) {
         let room_id = results[i]['room_id'];
 
-        if(!room_map.has(room_id)) {
+        if (!room_map.has(room_id)) {
             add_room_map(new BiliBarrage(room_id, cmtEventHandler));
         }
     }
@@ -217,8 +224,88 @@ async function load_room_table() {
     await pool.releaseConnection(db);
 }
 
+async function parseRankResult(json) {
+    if (json.code == 0) {
+        for (let i in json.data.list) {
+            let roomid = json.data.list[i].roomid;
+            let uid = json.data.list[i].uid;
+            let uname = json.data.list[i].uname;
+
+            let db = await pool.getConnection();
+
+            try {
+                let results = await db.query('SELECT * FROM room WHERE room_id = ?', [roomid]);
+
+                if (results.length == 0) {
+                    await db.query('INSERT INTO room VALUES(?,?,?);', [roomid, uid, uname]);
+                } else {
+                    await db.query('UPDATE room SET title = ? ,uid = ? WHERE room_id = ?;', [uname, uid, roomid]);
+                }
+
+                if (!room_map.has(roomid)) {
+                    add_room_map(new BiliBarrage(roomid, cmtEventHandler));
+                }
+            }
+            catch (e) {
+                console.log(e);
+            }
+
+            await pool.releaseConnection(db);
+        }
+    }
+}
+
+async function getRank(area_id) {
+    var options = {
+        host: 'api.live.bilibili.com',
+        port: 443,
+        path: '/rankdb/v1/Rank2018/getTop?type=master_last_hour&type_id=areaid_hour&area_id='+area_id,
+        method: 'GET'
+    };
+
+    var req = https.request(options, function (res) {
+        var body = '';
+
+        res.setEncoding('utf8');
+        res.on('data', function (chunk) {
+            body = body + chunk;
+        });
+
+        res.on('end', function () {
+            if (res.statusCode == 200)
+
+                try {
+                    let json = JSON.parse(body);
+                    console.log(json)
+                    parseRankResult(json);
+                } catch (e) {
+
+                }
+        });
+    });
+
+    req.on('error', function (e) {
+        console.log('problem with request: ' + e.message);
+    });
+
+
+    req.end();
+
+}
+
+
+async function updateRank2018(){
+    await getRank(1);
+    await getRank(2);
+    await getRank(3);
+    await getRank(4);
+    await getRank(5);
+}
+
 async function main() {
     global.pool = await mysql.createPool(JSON.parse(fs.readFileSync('db.json')));
+
+    
 
     add_room_map(new BiliBarrage(82178, cmtEventHandler));        //猫不吃芒果め
     add_room_map(new BiliBarrage(271744, cmtEventHandler));       //某幻君
@@ -256,7 +343,9 @@ async function main() {
     add_room_map(new BiliBarrage(96136, cmtEventHandler));       //浅野菌子
     add_room_map(new BiliBarrage(5632028, cmtEventHandler));       //Elifaus
 
-    await load_room_table();   
+    await load_room_table();
+
+    setInterval(() => {updateRank2018();}, 60000);
 }
 
 main();
