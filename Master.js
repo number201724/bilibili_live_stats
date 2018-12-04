@@ -41,21 +41,22 @@ async function updateUserInfo(db, uid, uname, gold, silver) {
 }
 
 async function giftEventHandler(json, roomId) {
-    uid = json.data.uid;
-    giftId = json.data.giftId;
-    uname = json.data.uname;
-    giftname = json.data.giftName;
-    coin_type = json.data.coin_type;
-    total_coin = json.data.total_coin;
-    gold = json.data.gold;
-    silver = json.data.silver;
-    num = json.data.num;
+    let uid = json.data.uid;
+    let giftId = json.data.giftId;
+    let uname = json.data.uname;
+    let giftname = json.data.giftName;
+    let coin_type = json.data.coin_type;
+    let total_coin = json.data.total_coin;
+    let gold = json.data.gold;
+    let silver = json.data.silver;
+    let num = json.data.num;
 
     let db = await pool.getConnection();
 
     // console.log(json)
 
     if (coin_type != 'silver') {
+        console.log(json)
         try {
             await db.query('INSERT INTO gifts VALUES(NULL,?,?,?,?,?,?,?,?,?,?,NOW());', [roomId, uid, giftId, uname, giftname, coin_type, total_coin, gold, silver, num]);
         }
@@ -72,11 +73,11 @@ async function giftEventHandler(json, roomId) {
 
 async function danmuEventHandler(json, roomId) {
 
-    uid = json.info[2][0];
-    uname = json.info[2][1];
-    text = json.info[1];
-    is_admin = json.info[2][2];
-    ship_member = json.info[7];
+    let uid = json.info[2][0];
+    let uname = json.info[2][1];
+    let text = json.info[1];
+    let is_admin = json.info[2][2];
+    let ship_member = json.info[7];
 
 
     let db = await pool.getConnection();
@@ -95,15 +96,15 @@ async function danmuEventHandler(json, roomId) {
 
 async function guardBuyEventHandle(json, roomId) {
 
-    uid = json.data.uid;
-    giftId = json.data.gift_id;
-    uname = json.data.username;
-    giftname = json.data.gift_name;
-    coin_type = 'gold';
-    total_coin = json.data.price;
-    gold = 0;
-    silver = 0;
-    super_gift_num = json.data.num;
+    let uid = json.data.uid;
+    let giftId = json.data.gift_id;
+    let uname = json.data.username;
+    let giftname = json.data.gift_name;
+    let coin_type = 'gold';
+    let total_coin = json.data.price;
+    let gold = 0;
+    let silver = 0;
+    let super_gift_num = json.data.num;
 
     let db = await pool.getConnection();
 
@@ -221,15 +222,15 @@ async function parseRankResult(json) {
 }
 
 async function getRank(area_id) {
-    var options = {
+    let options = {
         host: 'api.live.bilibili.com',
         port: 443,
         path: '/rankdb/v1/Rank2018/getTop?type=master_last_hour&type_id=areaid_hour&area_id=' + area_id,
         method: 'GET'
     };
 
-    var req = https.request(options, function (res) {
-        var body = '';
+    let req = https.request(options, function (res) {
+        let body = '';
 
         res.setEncoding('utf8');
         res.on('data', function (chunk) {
