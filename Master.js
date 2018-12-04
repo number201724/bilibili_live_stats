@@ -1,3 +1,4 @@
+"use strict";
 global.Util = require("./Util");
 const mysql = require('promise-mysql');
 const fs = require('fs')
@@ -160,6 +161,8 @@ async function cmtEventHandler(json, roomId) {
         case 'PK_SETTLE':
         case 'PK_PROCESS':
         case 'PK_MIC_END':
+        case 'PK_AGAIN':
+        case 'PK_CLICK_AGAIN':
             break;
         case 'SEND_GIFT':       //礼物消息
             await giftEventHandler(json, roomId);
