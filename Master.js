@@ -152,6 +152,10 @@ async function cmtEventHandler(json, roomId) {
         case 'SYS_GIFT':        //节奏风暴20倍触发这个
         case 'HOUR_RANK_AWARDS':
         case 'ROOM_RANK':       //小时榜rank更新
+        case 'PK_START':
+        case 'PK_PRE':
+        case 'PK_MATCH':
+        case 'PK_END':
             break;
         case 'SEND_GIFT':       //礼物消息
             await giftEventHandler(json, roomId);
