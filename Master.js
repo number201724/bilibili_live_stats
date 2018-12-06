@@ -162,6 +162,8 @@ async function cmtEventHandler(json, roomId) {
         case 'PK_PROCESS':
         case 'PK_MIC_END':
         case 'PK_AGAIN':
+        case 'TV_END':
+        case 'ADMINS':
         case 'PK_CLICK_AGAIN':
             break;
         case 'SEND_GIFT':       //礼物消息
