@@ -83,12 +83,12 @@ async function danmuEventHandler(json, roomId) {
 
     let db = await pool.getConnection();
 
-    // try {
-    //     await db.query('INSERT INTO danmu VALUES(NULL,?,?,?,?,?,?,NOW());', [roomId, uid, uname, text, is_admin, ship_member]);
-    // }
-    // catch (e) {
-    //     console.log(e);
-    // }
+    try {
+        await db.query('INSERT INTO danmu VALUES(NULL,?,?,?,?,?,?,NOW());', [roomId, uid, uname, text, is_admin, ship_member]);
+    }
+    catch (e) {
+        console.log(e);
+    }
 
     await updateUserInfo(db, uid, uname, null, null);
 
